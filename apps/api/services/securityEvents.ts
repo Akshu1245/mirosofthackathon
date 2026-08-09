@@ -31,6 +31,10 @@ export type SecurityEventType =
   | "credential_broker_denied"
   | "credential_broker_replay_blocked"
   | "credential_broker_headers_dropped"
+  // Runtime governance — Hindsight-memory-informed, cascadeflow-routed
+  // request evaluation (apps/api/services/governance/runtimeGovernance.ts).
+  | "governance_prompt_injection_blocked"
+  | "governance_request_evaluated"
   // Evidence export — worth recording who pulled the audit trail out.
   | "siem_export_generated";
 

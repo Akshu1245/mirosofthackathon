@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { trpc } from "@/lib/trpc";
 
@@ -114,6 +115,19 @@ export default function RuntimeGovernancePage() {
   return (
     <main className="p-5 text-white md:p-8">
       <div className="mx-auto max-w-7xl space-y-7">
+        <nav className="flex flex-wrap gap-2 text-sm">
+          <Link href="/governance-demo" className="rounded-lg px-3 py-1.5 text-gray-400 hover:bg-white/[0.06] hover:text-white">
+            1. The pain
+          </Link>
+          <span className="rounded-lg bg-emerald-400 px-3 py-1.5 font-medium text-black">2. Live: block + recall</span>
+          <Link href="/governance-demo/trust" className="rounded-lg px-3 py-1.5 text-gray-400 hover:bg-white/[0.06] hover:text-white">
+            3. Why it&apos;s hard to fake
+          </Link>
+          <Link href="/governance-demo/close" className="rounded-lg px-3 py-1.5 text-gray-400 hover:bg-white/[0.06] hover:text-white">
+            4. Honest close
+          </Link>
+        </nav>
+
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
             Runtime governance

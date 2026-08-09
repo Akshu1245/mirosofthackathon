@@ -94,6 +94,63 @@ specific and listed in §5 — not vague.
 
 ---
 
+## 3b. Runtime governance: Hindsight memory + cascadeflow routing (added 2026-08-09, NOT yet in the §2 verified test run)
+
+A second capability track, merged from a separate working branch on 2026-08-09.
+**The §2 commands above have not been re-run since this merge** — do not claim
+"872 tests pass" includes this code until `pnpm typecheck && pnpm test:api` is
+re-executed and this section is updated with the result.
+
+- `packages/agent-memory` — Hindsight-backed agent memory adapter
+  (`@vectorize-io/hindsight-client`, real dependency) with an honest local
+  fallback. Retains only server-authored safe summaries (category + severity +
+  one-line text + allowlisted metadata) — **never** raw prompts or model
+  output. Source comment in `hindsightClient.ts` is explicit: "must NOT be
+  described as integrated until a real retain()/recall() call against a live
+  Hindsight server has actually succeeded." **As of this commit, that live
+  call has not happened.** `HINDSIGHT_BASE_URL`/`HINDSIGHT_API_KEY` are unset;
+  every retain/recall in this deployment goes through the local fallback and
+  is labeled `memory.source: "local_fallback"` everywhere the UI or API
+  surfaces it.
+- `packages/model-routing` — cascadeflow-backed routing adapter
+  (`@cascadeflow/core`, real dependency). Decision-only: `cascadeflowClient.ts`
+  imports `PreRouter`/`RoutingDecisionHelper`/`CostCalculator` only, never
+  `CascadeAgent` or any provider-calling class — enforced by what the file
+  imports, not by convention. No network call, no API key required.
+- `apps/api/services/governance/runtimeGovernance.ts` — connects the existing
+  prompt-injection/PII engines, the above two adapters, and the existing
+  `enforcement.ts` gateway boundary. Recalled memory can move the risk signal
+  at most one step (none→suspicious, suspicious→high_risk) and is never
+  concatenated into a prompt or passed to an LLM — bounded by a fixed-enum
+  parse of a `[severity]` prefix, nothing else.
+- **Audit trail for this path reuses the existing `securityEvents.ts` buffer**
+  (`governance_prompt_injection_blocked`, `governance_request_evaluated`),
+  filtered by workspace in `agentFirewall.governanceAuditEvents`. **This is
+  not the same thing as the hash-chained `actionLedger` described in §1/§4.**
+  Do not present it as such on the demo's "why this is hard to fake" screen —
+  the true hash-chained, tamper-evident guarantee belongs to the Agent
+  Firewall action-ledger path, not this one. If a judge asks whether this
+  audit trail is tamper-evident, the honest answer is: not yet, it is an
+  in-memory/DB event log with the same guarantees as every other
+  `logSecurityEvent` call in the codebase — no hash chain.
+- `apps/web/app/runtime-governance` — the demo UI. Four presets
+  (normal / injection / recall / budget-exhausted) exercise the whole path
+  in one screen. `evaluateGoverned` and `governanceAuditEvents` are
+  `protectedProcedure` (auth required) — there is no unauthenticated demo
+  path yet, unlike `apps/web/app/demo/judge` which has one
+  (`trpc.demo.scanPrompt`, unauthenticated by design for judge access).
+
+### What is proven vs. pending for THIS track specifically
+
+| Claim | Status |
+|---|---|
+| cascadeflow makes a real, decision-only routing call (no provider call, no network) | **Proven** — verified by import structure, unit-tested against the real `@cascadeflow/core` package |
+| Hindsight retains/recalls against a live instance | **Not proven** — SDK is real, live call is not yet made. Local fallback active. |
+| Memory-recalled severity can escalate risk signal, bounded | **Proven** — `applyMemoryInfluence()`, unit-tested |
+| Prompt injection / PII detection blocks before any provider call | **Proven** — reuses the existing, already-tested `apps/api/engines/*` |
+| Audit trail is hash-chained / tamper-evident | **False if claimed.** Only `actionLedger` (Agent Firewall) has this. This path does not. |
+| This code typechecks and its tests pass | **Unverified since the 2026-08-09 merge** — re-run §2 before the demo, not the night before |
+
 ## 4. What changed recently (and why it matters)
 
 ### Security fix — attenuation bypass (`packages/action-control/src/authority.ts`)
