@@ -149,7 +149,7 @@ re-executed and this section is updated with the result.
 | Memory-recalled severity can escalate risk signal, bounded | **Proven** — `applyMemoryInfluence()`, unit-tested |
 | Prompt injection / PII detection blocks before any provider call | **Proven** — reuses the existing, already-tested `apps/api/engines/*` |
 | Audit trail is hash-chained / tamper-evident | **False if claimed.** Only `actionLedger` (Agent Firewall) has this. This path does not. |
-| This code typechecks and its tests pass | **Unverified since the 2026-08-09 merge** — re-run §2 before the demo, not the night before |
+| This code typechecks and its tests pass | **Verified 2026-08-09** — `pnpm test:api`: 97/98 suites, 936/947 tests (11 skipped, documented in §5 item 2, not new). `pnpm test:packages`: all green. `pnpm --filter @rakshex/api typecheck` and `pnpm --filter @rakshex/web typecheck`: both clean. (Full aggregate `pnpm typecheck` still hits an unrelated, pre-existing flaky `cookie`-type resolution error in whichever of `compliance-engine`/`config` runs at a given cache slot — reproduced twice, hits a different package each time, unrelated to this merge. Typecheck each package individually to route around it until that's fixed separately.) |
 
 ## 4. What changed recently (and why it matters)
 

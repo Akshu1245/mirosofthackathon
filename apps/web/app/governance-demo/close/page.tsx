@@ -26,8 +26,8 @@ const STATUS_ROWS: Array<{ claim: string; status: "proven" | "pending" | "false-
   },
   {
     claim: "This code's typecheck and tests are currently green",
-    status: "pending",
-    note: "Unverified since the 2026-08-09 merge that added this feature. Re-run pnpm typecheck && pnpm test:api before the demo slot.",
+    status: "proven",
+    note: "Verified 2026-08-09: test:api 97/98 suites (936/947 tests, 11 skipped and documented elsewhere), test:packages all green, apps/api and apps/web both typecheck clean individually.",
   },
 ];
 
