@@ -22,6 +22,7 @@ import {
   type RetainResult,
   type SafeMetadata,
   type SecurityIncidentInput,
+  type WorkspacePatternSummary,
 } from "./types.js";
 
 interface StoredIncident {
@@ -94,5 +95,41 @@ export class LocalFallbackAgentMemoryClient implements AgentMemoryAdapter {
         : `local fallback — not Hindsight: ${relevant.length} related incident(s) found. Most relevant: "${relevant[0]!.text}"`;
 
     return { answer, basedOnCount: relevant.length, source: "local_fallback" };
+  }
+
+  /**
+   * Deterministic, non-LLM tally over this instance's stored incidents —
+   * no synthesis, no reasoning, just a count grouped by category. Exists
+   * so the UI has something honest to show when no live Hindsight
+   * instance is configured; never dressed up as pattern *learning*, which
+   * is exactly what distinguishes this from the real mental-model path.
+   */
+  async getWorkspacePatternSummary(workspaceId: string): Promise<WorkspacePatternSummary> {
+    const bankId = mapWorkspaceToBankId(workspaceId);
+    const incidents = this.store.filter((item) => item.bankId === bankId);
+
+    if (incidents.length === 0) {
+      return {
+        content: "local fallback — not Hindsight: no incidents retained yet for this workspace",
+        source: "local_fallback",
+        mentalModelId: null,
+        basedOnCount: 0,
+      };
+    }
+
+    const counts = new Map<string, number>();
+    for (const item of incidents) {
+      const match = /^\[(?:low|medium|high|critical)\] ([a-z_]+):/.exec(item.text);
+      const category = match?.[1] ?? "other";
+      counts.set(category, (counts.get(category) ?? 0) + 1);
+    }
+    const [topCategory, topCount] = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]!;
+
+    return {
+      content: `local fallback — not Hindsight: ${incidents.length} incident(s) retained for this workspace. Most common: ${topCategory} (${topCount}\u00d7).`,
+      source: "local_fallback",
+      mentalModelId: null,
+      basedOnCount: incidents.length,
+    };
   }
 }

@@ -87,3 +87,63 @@ describe("LocalFallbackAgentMemoryClient", () => {
     expect(reflection.basedOnCount).toBeGreaterThan(0);
   });
 });
+
+describe("LocalFallbackAgentMemoryClient — getWorkspacePatternSummary", () => {
+  it("reports zero incidents honestly for a workspace with nothing retained", async () => {
+    const client = new LocalFallbackAgentMemoryClient();
+    const summary = await client.getWorkspacePatternSummary("ws_empty");
+    expect(summary).toEqual({
+      content: "local fallback — not Hindsight: no incidents retained yet for this workspace",
+      source: "local_fallback",
+      mentalModelId: null,
+      basedOnCount: 0,
+    });
+  });
+
+  it("tallies retained incidents by category deterministically, no LLM call", async () => {
+    const client = new LocalFallbackAgentMemoryClient();
+    await client.retainSecurityIncident({
+      workspaceId: "ws_1",
+      category: "prompt_injection",
+      severity: "high",
+      summary: "Blocked attempt one.",
+    });
+    await client.retainSecurityIncident({
+      workspaceId: "ws_1",
+      category: "prompt_injection",
+      severity: "critical",
+      summary: "Blocked attempt two.",
+    });
+    await client.retainSecurityIncident({
+      workspaceId: "ws_1",
+      category: "pii_exposure",
+      severity: "medium",
+      summary: "Redacted a PII leak.",
+    });
+
+    const summary = await client.getWorkspacePatternSummary("ws_1");
+
+    expect(summary.source).toBe("local_fallback");
+    expect(summary.mentalModelId).toBeNull();
+    expect(summary.basedOnCount).toBe(3);
+    expect(summary.content).toContain("3 incident(s)");
+    expect(summary.content).toContain("prompt_injection (2×)");
+    expect(summary.content).toMatch(/^local fallback — not Hindsight:/);
+  });
+
+  it("enforces workspace isolation for pattern summaries the same way it does for recall", async () => {
+    const client = new LocalFallbackAgentMemoryClient();
+    await client.retainSecurityIncident({
+      workspaceId: "ws_alpha",
+      category: "prompt_injection",
+      severity: "high",
+      summary: "Alpha's incident.",
+    });
+
+    const betaSummary = await client.getWorkspacePatternSummary("ws_beta");
+    expect(betaSummary.basedOnCount).toBe(0);
+
+    const alphaSummary = await client.getWorkspacePatternSummary("ws_alpha");
+    expect(alphaSummary.basedOnCount).toBe(1);
+  });
+});

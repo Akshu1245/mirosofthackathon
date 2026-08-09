@@ -29,6 +29,7 @@ import {
   type RetainResult,
   type SafeMetadata,
   type SecurityIncidentInput,
+  type WorkspacePatternSummary,
 } from "./types.js";
 
 /** Minimal shape this file actually depends on — lets tests inject a fake without a live server. */
@@ -56,6 +57,33 @@ export interface HindsightWireClient {
     query: string,
     options?: { tags?: string[]; includeFacts?: boolean; signal?: AbortSignal },
   ): Promise<{ text: string; based_on?: unknown }>;
+  /**
+   * Mental model methods — UNVERIFIED against a live @vectorize-io/hindsight-client
+   * instance (see docs/hindsight-architecture-review.md). Method names and
+   * response shapes here are taken from the hindsight-skills project's own
+   * documented Node.js SDK examples, not from having exercised the real
+   * package. Same "implemented, pending live verification" status as
+   * retain/recall/reflect above until a live call actually succeeds.
+   */
+  listMentalModels(
+    bankId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<{ mental_models: Array<{ id: string; name: string }> }>;
+  createMentalModel(
+    bankId: string,
+    input: {
+      name: string;
+      source_query: string;
+      tags?: string[];
+      trigger?: { refresh_after_consolidation?: boolean };
+    },
+    options?: { signal?: AbortSignal },
+  ): Promise<{ mental_model_id: string }>;
+  getMentalModel(
+    bankId: string,
+    mentalModelId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<{ content: string; based_on?: unknown }>;
 }
 
 export interface HindsightAgentMemoryClientOptions {
@@ -130,6 +158,11 @@ async function withTimeout<T>(operation: string, timeoutMs: number, run: (signal
   }
 }
 
+
+const WORKSPACE_PATTERN_MODEL_NAME = "rakshex-workspace-pattern-summary";
+const WORKSPACE_PATTERN_SOURCE_QUERY =
+  "What recurring security risk patterns exist in this workspace?";
+
 export class HindsightAgentMemoryClient implements AgentMemoryAdapter {
   private readonly client: HindsightWireClient;
   private readonly timeoutMs: number;
@@ -199,5 +232,48 @@ export class HindsightAgentMemoryClient implements AgentMemoryAdapter {
       basedOnCount,
       source: "hindsight",
     };
+  }
+  /**
+   * Get-or-create a single named mental model per workspace bank, then
+   * fetch its content. Per the architect skill's own guidance, fetching a
+   * mental model by id is a fast key-value lookup, not a search — safe to
+   * call on every page load, unlike reflect(). Creation only happens once
+   * per bank (subsequent calls find the existing model by name), and the
+   * model is configured to auto-refresh after observation consolidation
+   * so it stays current without this code re-running source_query itself.
+   */
+  async getWorkspacePatternSummary(workspaceId: string): Promise<WorkspacePatternSummary> {
+    const bankId = mapWorkspaceToBankId(workspaceId);
+    return withTimeout("getWorkspacePatternSummary", this.timeoutMs, async (signal) => {
+      const list = await this.client.listMentalModels(bankId, { signal });
+      let mentalModelId = list.mental_models.find((m) => m.name === WORKSPACE_PATTERN_MODEL_NAME)?.id;
+
+      if (!mentalModelId) {
+        const created = await this.client.createMentalModel(
+          bankId,
+          {
+            name: WORKSPACE_PATTERN_MODEL_NAME,
+            source_query: WORKSPACE_PATTERN_SOURCE_QUERY,
+            trigger: { refresh_after_consolidation: true },
+          },
+          { signal },
+        );
+        mentalModelId = created.mental_model_id;
+      }
+
+      const model = await this.client.getMentalModel(bankId, mentalModelId, { signal });
+      const basedOnCount = Array.isArray(model.based_on)
+        ? model.based_on.length
+        : model.based_on && typeof model.based_on === "object"
+          ? Object.keys(model.based_on as object).length
+          : 0;
+
+      return {
+        content: model.content,
+        source: "hindsight",
+        mentalModelId,
+        basedOnCount,
+      };
+    });
   }
 }

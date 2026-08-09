@@ -16,6 +16,9 @@ function fakeClient(overrides: Partial<HindsightWireClient> = {}): HindsightWire
     retain: vi.fn().mockResolvedValue({ success: true, items_count: 1 }),
     recall: vi.fn().mockResolvedValue({ results: [] }),
     reflect: vi.fn().mockResolvedValue({ text: "no relevant memories", based_on: [] }),
+    listMentalModels: vi.fn().mockResolvedValue({ mental_models: [] }),
+    createMentalModel: vi.fn().mockResolvedValue({ mental_model_id: "mm_default" }),
+    getMentalModel: vi.fn().mockResolvedValue({ content: "", based_on: [] }),
     ...overrides,
   };
 }
@@ -154,5 +157,68 @@ describe("HindsightAgentMemoryClient — reflectOnDecision", () => {
     expect(result.source).toBe("hindsight");
     expect(result.basedOnCount).toBe(2);
     expect(result.answer).toBe("Approve with caution.");
+  });
+});
+
+describe("HindsightAgentMemoryClient — getWorkspacePatternSummary", () => {
+  it("creates a mental model on first call when none exists yet, then fetches its content", async () => {
+    const listMentalModels = vi.fn().mockResolvedValue({ mental_models: [] });
+    const createMentalModel = vi.fn().mockResolvedValue({ mental_model_id: "mm_1" });
+    const getMentalModel = vi.fn().mockResolvedValue({ content: "Recurring pattern: 3 prompt injection attempts.", based_on: ["a", "b", "c"] });
+    const client = new HindsightAgentMemoryClient({
+      baseUrl: "http://localhost:8888",
+      client: fakeClient({ listMentalModels, createMentalModel, getMentalModel }),
+    });
+
+    const result = await client.getWorkspacePatternSummary("ws_1");
+
+    expect(listMentalModels).toHaveBeenCalledTimes(1);
+    expect(createMentalModel).toHaveBeenCalledTimes(1);
+    const [bankId, input] = createMentalModel.mock.calls[0]!;
+    expect(bankId).toBe(mapWorkspaceToBankId("ws_1"));
+    expect(input.name).toBe("rakshex-workspace-pattern-summary");
+    expect(input.source_query).toMatch(/recurring security risk patterns/i);
+    expect(input.trigger).toEqual({ refresh_after_consolidation: true });
+    expect(getMentalModel).toHaveBeenCalledWith(mapWorkspaceToBankId("ws_1"), "mm_1", expect.anything());
+    expect(result).toEqual({
+      content: "Recurring pattern: 3 prompt injection attempts.",
+      source: "hindsight",
+      mentalModelId: "mm_1",
+      basedOnCount: 3,
+    });
+  });
+
+  it("reuses an existing mental model by name instead of creating a duplicate", async () => {
+    const listMentalModels = vi.fn().mockResolvedValue({
+      mental_models: [{ id: "mm_existing", name: "rakshex-workspace-pattern-summary" }],
+    });
+    const createMentalModel = vi.fn();
+    const getMentalModel = vi.fn().mockResolvedValue({ content: "No strong patterns yet.", based_on: [] });
+    const client = new HindsightAgentMemoryClient({
+      baseUrl: "http://localhost:8888",
+      client: fakeClient({ listMentalModels, createMentalModel, getMentalModel }),
+    });
+
+    const result = await client.getWorkspacePatternSummary("ws_1");
+
+    expect(createMentalModel).not.toHaveBeenCalled();
+    expect(getMentalModel).toHaveBeenCalledWith(mapWorkspaceToBankId("ws_1"), "mm_existing", expect.anything());
+    expect(result.mentalModelId).toBe("mm_existing");
+    expect(result.basedOnCount).toBe(0);
+  });
+
+  it("scopes the mental model lookup to the calling workspace's bank id, not another workspace's", async () => {
+    const listMentalModels = vi.fn().mockResolvedValue({ mental_models: [] });
+    const createMentalModel = vi.fn().mockResolvedValue({ mental_model_id: "mm_2" });
+    const getMentalModel = vi.fn().mockResolvedValue({ content: "x", based_on: [] });
+    const client = new HindsightAgentMemoryClient({
+      baseUrl: "http://localhost:8888",
+      client: fakeClient({ listMentalModels, createMentalModel, getMentalModel }),
+    });
+
+    await client.getWorkspacePatternSummary("ws_alpha");
+
+    expect(listMentalModels).toHaveBeenCalledWith(mapWorkspaceToBankId("ws_alpha"), expect.anything());
+    expect(listMentalModels).not.toHaveBeenCalledWith(mapWorkspaceToBankId("ws_beta"), expect.anything());
   });
 });

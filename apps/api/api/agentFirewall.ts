@@ -33,6 +33,7 @@ import {
 import { decryptSecret, encryptSecret, isVaultConfigured } from "../services/vault";
 import { logSecurityEvent, getRecentSecurityEvents } from "../services/securityEvents";
 import { evaluateGovernedRequest } from "../services/governance/runtimeGovernance";
+import { getAgentMemoryAdapter } from "../services/agentMemoryRuntime";
 import { exportLedgerToSiem } from "../services/ledgerSiemExport";
 
 type ApiKeyAuthContext = { workspaceId: number; scopes: string[] };
@@ -673,6 +674,24 @@ export const agentFirewallRouter = router({
             (event.details as Record<string, unknown>)?.workspaceId === workspaceKey,
         )
         .slice(0, input.limit);
+    }),
+
+  /**
+   * MVP mental-models integration (2026-08-09, see
+   * docs/hindsight-architecture-review.md). Fetches a single synthesized
+   * summary of recurring security patterns for this workspace — the
+   * difference between remembering individual incidents (governanceAuditEvents
+   * above, evaluateGoverned's recall) and learning across them. Read-only,
+   * side-effect-free from the caller's perspective (the adapter may lazily
+   * create the underlying mental model on first call, but that's an
+   * implementation detail of packages/agent-memory, not this procedure).
+   */
+  workspacePatternSummary: protectedProcedure
+    .input(workspaceInput)
+    .query(async ({ input, ctx }) => {
+      await requireWorkspaceMembership(input.workspaceId, ctx.user.id);
+      const memory = getAgentMemoryAdapter();
+      return memory.getWorkspacePatternSummary(String(input.workspaceId));
     }),
 
   ledger: router({

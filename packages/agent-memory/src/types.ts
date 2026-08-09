@@ -109,10 +109,33 @@ export interface ReflectionResult {
   source: MemorySource;
 }
 
+export interface WorkspacePatternSummary {
+  /** Synthesized text describing recurring patterns across this workspace's retained incidents. */
+  content: string;
+  source: MemorySource;
+  /** Hindsight mental model id backing this summary. null for local fallback (no mental model concept there). */
+  mentalModelId: string | null;
+  /** How many incidents the summary is grounded in. 0 means nothing to synthesize yet. */
+  basedOnCount: number;
+}
+
 export interface AgentMemoryAdapter {
   retainSecurityIncident(input: SecurityIncidentInput): Promise<RetainResult>;
   recallRelevantIncidents(query: RecallQuery): Promise<RecalledIncident[]>;
   reflectOnDecision(request: ReflectionRequest): Promise<ReflectionResult>;
+  /**
+   * MVP mental-models integration (added 2026-08-09, see
+   * docs/hindsight-architecture-review.md). One synthesized summary per
+   * workspace answering "what recurring security risk patterns exist
+   * here" — the difference between remembering individual incidents and
+   * learning across them. Hindsight impl: get-or-create a single named
+   * mental model per bank, then fetch its content (a fast key-value
+   * lookup per the architect skill's own guidance, not a search). Local
+   * fallback impl: a deterministic, non-LLM tally over locally stored
+   * incidents, clearly labeled as such — never claims synthesis it did
+   * not do.
+   */
+  getWorkspacePatternSummary(workspaceId: string): Promise<WorkspacePatternSummary>;
 }
 
 export class AgentMemoryError extends Error {

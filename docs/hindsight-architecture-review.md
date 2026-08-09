@@ -65,7 +65,39 @@ of only demonstrating it for one incident at a time.
   would let the honest-close screen's "recurring pattern" story become
   literally true rather than only demonstrated via a single presets.
 
-This is real, scoped, buildable work — not a vague idea — but it's new
-surface area that needs its own tests before being claimed as proven in
-CLAUDE.md §3b. Treat it as the next block of work, not something to rush
-in before finals.
+## Status: MVP built 2026-08-09
+
+Built, not just proposed, once the actual finals date (16 Aug) made "later"
+the wrong call for a same-week gap. Scope was deliberately kept to the
+single moment described above — no scoring, no multiple mental models, no
+change to the already-verified evaluateGoverned request path.
+
+**What changed:**
+
+- `packages/agent-memory`: new `getWorkspacePatternSummary(workspaceId)` on
+  `AgentMemoryAdapter`. Hindsight impl does get-or-create-by-name on a
+  single mental model per workspace bank (`rakshex-workspace-pattern-summary`,
+  `source_query: "What recurring security risk patterns exist in this
+  workspace?"`, `trigger.refresh_after_consolidation: true`), then fetches
+  its content — a key-value lookup per the architect skill's own guidance,
+  not a search, so it's cheap enough to call on page load. Local fallback
+  impl is a deterministic, non-LLM tally by category over locally stored
+  incidents — explicitly never dressed up as synthesis it didn't do.
+- `apps/api/api/agentFirewall.ts`: new `workspacePatternSummary` read-only
+  procedure, additive, does not touch `evaluateGoverned`.
+- `apps/web/app/governance-demo/trust/page.tsx`: new live panel showing the
+  fetched summary, with the same honest Hindsight/local-fallback badge used
+  everywhere else in this feature.
+
+**Verification status — precise, not rounded up:**
+
+| Layer | Status |
+|---|---|
+| `packages/agent-memory` (types, hindsightClient, localFallback) | **Verified 2026-08-09** — 27/27 tests pass, `tsc --noEmit` clean, run standalone outside the monorepo workspace to route around this sandbox's disk limits. Real output, not claimed. |
+| `apps/api` (`workspacePatternSummary` procedure) | **Not typechecked yet.** A real bug was caught and fixed by hand (missing `getAgentMemoryAdapter` import) but `pnpm --filter @rakshex/api typecheck` has not been run since this change — do that before treating this as proven. |
+| `apps/web` (trust page live panel) | **Not typechecked yet**, same reason. Run `pnpm --filter @rakshex/web typecheck`. |
+| Mental model method names against the real `@vectorize-io/hindsight-client` package | **Unverified against a live call**, same status as the existing retain/recall/reflect methods — taken from the hindsight-skills project's own documented Node.js examples, not from inspecting the installed package's actual `.d.ts` (attempted, blocked by output-size limits in this session). First live call to `/governance-demo/trust` with a real Hindsight key will either confirm or break this — watch for it specifically, don't assume it's fine just because retain/recall already work. |
+
+Do not mark this "proven" in the honest-close screen until the two pending
+typecheck runs come back clean and one live Hindsight call against this new
+method has actually succeeded.

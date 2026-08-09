@@ -151,6 +151,19 @@ re-executed and this section is updated with the result.
 | Audit trail is hash-chained / tamper-evident | **False if claimed.** Only `actionLedger` (Agent Firewall) has this. This path does not. |
 | This code typechecks and its tests pass | **Verified 2026-08-09** — `pnpm test:api`: 97/98 suites, 936/947 tests (11 skipped, documented in §5 item 2, not new). `pnpm test:packages`: all green. `pnpm --filter @rakshex/api typecheck` and `pnpm --filter @rakshex/web typecheck`: both clean. (Full aggregate `pnpm typecheck` still hits an unrelated, pre-existing flaky `cookie`-type resolution error in whichever of `compliance-engine`/`config` runs at a given cache slot — reproduced twice, hits a different package each time, unrelated to this merge. Typecheck each package individually to route around it until that's fixed separately.) |
 
+### 3c. Mental-models MVP (added 2026-08-09, PARTIALLY verified — see docs/hindsight-architecture-review.md)
+
+Built same-day once the actual finals date made deferring it the wrong
+call. New `getWorkspacePatternSummary` method, one mental model per
+workspace, wired into a new read-only tRPC procedure and a live panel on
+`/governance-demo/trust`. packages/agent-memory: 27/27 tests pass, tsc
+clean, verified standalone outside this sandbox's disk-constrained
+monorepo install. apps/api and apps/web: NOT typechecked since this
+change landed — do that before calling this proven end to end. Full
+detail, including the precise per-layer verification table, is in
+docs/hindsight-architecture-review.md — read that, not just this
+paragraph, before making any claim about this feature to a judge.
+
 ## 4. What changed recently (and why it matters)
 
 ### Security fix — attenuation bypass (`packages/action-control/src/authority.ts`)

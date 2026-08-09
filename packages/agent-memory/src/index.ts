@@ -11,6 +11,7 @@ export type {
   RetainResult,
   SafeMetadata,
   SecurityIncidentInput,
+  WorkspacePatternSummary,
 } from "./types.js";
 export { AgentMemoryError, AgentMemoryTimeoutError, mapWorkspaceToBankId } from "./types.js";
 

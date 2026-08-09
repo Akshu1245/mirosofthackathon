@@ -1,3 +1,8 @@
+"use client";
+
+import { useWorkspace } from "@/hooks/useWorkspace";
+import { trpc } from "@/lib/trpc";
+
 const MECHANICS = [
   {
     title: "Memory can only move risk one step",
@@ -46,6 +51,13 @@ const MECHANICS = [
 ];
 
 export default function TrustMechanicsPage() {
+  const { workspaceId, isLoading } = useWorkspace();
+  const enabled = workspaceId > 0;
+  const pattern = trpc.agentFirewall.workspacePatternSummary.useQuery(
+    { workspaceId },
+    { enabled, retry: false },
+  );
+
   return (
     <main className="p-5 md:p-8">
       <div className="mx-auto max-w-5xl space-y-8 py-12">
@@ -64,6 +76,37 @@ export default function TrustMechanicsPage() {
             See the honest close for exactly where the line is.
           </p>
         </header>
+
+        <article className="rounded-xl border border-white/10 bg-white/[0.03] p-6">
+          <h2 className="text-lg font-semibold">Live: what this workspace has learned</h2>
+          <p className="mt-1 text-sm text-gray-400">
+            Not a demo of individual incident recall — this is a single synthesized
+            summary across every incident retained for this workspace, refreshed by
+            Hindsight after each new retain. Run the presets on the live screen first,
+            then come back here to see this update.
+          </p>
+          {!enabled || isLoading ? (
+            <p className="mt-4 text-sm text-gray-500">Loading workspace…</p>
+          ) : pattern.isLoading ? (
+            <p className="mt-4 text-sm text-gray-500">Synthesizing…</p>
+          ) : pattern.error ? (
+            <p className="mt-4 text-sm text-red-300">{pattern.error.message}</p>
+          ) : pattern.data ? (
+            <div className="mt-4 space-y-2">
+              <p className="text-sm leading-6 text-gray-200">{pattern.data.content}</p>
+              <p className="text-xs text-gray-500">
+                based on {pattern.data.basedOnCount} incident(s) · source:{" "}
+                <span
+                  className={
+                    pattern.data.source === "hindsight" ? "text-emerald-300" : "text-amber-300"
+                  }
+                >
+                  {pattern.data.source === "hindsight" ? "Hindsight" : "local fallback (not Hindsight)"}
+                </span>
+              </p>
+            </div>
+          ) : null}
+        </article>
 
         <div className="grid gap-6 md:grid-cols-2">
           {MECHANICS.map((m) => (
