@@ -98,10 +98,45 @@ change to the already-verified evaluateGoverned request path.
 | `apps/web` (trust page live panel) | **Verified 2026-08-09** — `pnpm --filter @rakshex/web typecheck` clean, same run. |
 | Mental model method names against the real `@vectorize-io/hindsight-client` package | **Unverified against a live call**, same status as the existing retain/recall/reflect methods — taken from the hindsight-skills project's own documented Node.js examples, not from inspecting the installed package's actual `.d.ts` (attempted, blocked by output-size limits in this session). First live call to `/governance-demo/trust` with a real Hindsight key will either confirm or break this — watch for it specifically, don't assume it's fine just because retain/recall already work. |
 
-Both pending typecheck runs are now clean. The one remaining unverified
-item is unchanged: a live Hindsight call against `listMentalModels` /
-`createMentalModel` / `getMentalModel` has not happened yet — that only
-resolves once a real Hindsight key is wired in and `/governance-demo/trust`
-is loaded against it. Do not mark this "proven" on the honest-close screen
-until that happens; typecheck and unit tests passing is necessary but not
-sufficient for a claim about a live third-party API.
+Both pending typecheck runs are clean.
+
+## Post-mortem: our own types lied about the real SDK (found and fixed 2026-08-09)
+
+Before any live call happened, `hindsightClient.ts`'s `HindsightWireClient`
+interface was checked against the actual installed
+`@vectorize-io/hindsight-client@0.9.0` type definitions
+(`node_modules/@vectorize-io/hindsight-client/dist/index.d.ts`, 9,570
+lines, real types — the package declares `"types": "./dist/index.d.ts"`
+in its own `package.json`, this is not an `any`-typed wrapper). The method
+names/shapes I'd written were taken from the hindsight-skills project's
+own documented Node.js SDK examples, not from the installed package
+itself. Three real mismatches, all fixed:
+
+1. **`createMentalModel` call shape.** Assumed `createMentalModel(bankId, { name, source_query, tags, trigger })` — one options object. Real signature: `createMentalModel(bankId, name, sourceQuery, options?)` — three positional arguments. Would have sent the wrong data to the server on every live call.
+2. **Trigger field casing.** Assumed `trigger: { refresh_after_consolidation: true }` (snake_case, copied from the skill doc's Python example). Real field: `refreshAfterConsolidation` (camelCase). This would not have errored — an unrecognized key in a JS options object is just silently dropped — so the mental model would have silently never auto-refreshed, with no error to notice.
+3. **Response shapes.** `listMentalModels` returns `{ items: [...] }`, not `{ mental_models: [...] }` — the old code would have thrown `Cannot read properties of undefined (reading 'find')` on the very first live call. `createMentalModel`'s `mental_model_id` is nullable (creation can be processed asynchronously) — the old code assumed it was always a string and would have called `getMentalModel` with `undefined`. `getMentalModel`'s response has no `based_on` field at all (unlike `reflect()`, which does) — the old `basedOnCount` calculation was reading a field that doesn't exist on this endpoint; it always silently evaluated to 0, not a crash, just quietly wrong.
+
+Retain/recall/reflect were checked the same way at the same time and are
+**confirmed correct** against the real types — no changes needed there,
+their existing "proven" status holds.
+
+**What's still honestly unverified:** the corrected code has never been
+called against a live Hindsight server — the type-level contract is now
+right, but "the real API's runtime behavior matches its own published
+types" is still an assumption until one live call actually succeeds. That
+resolves the same way it always was going to: wire in a real key, load
+`/governance-demo/trust`, and watch for either a working synthesized
+summary or an error. Do not mark this "proven" on the honest-close screen
+until that happens.
+
+**One known consequence not yet fixed, intentionally out of scope for this
+pass:** `getWorkspacePatternSummary`'s Hindsight implementation now always
+returns `basedOnCount: 0`, because the real API has no field to compute it
+from. `apps/web/app/governance-demo/trust/page.tsx` still renders "based on
+N incident(s)" for both sources — against live Hindsight, that will always
+read "based on 0 incident(s)" even when the summary clearly reflects real
+incidents. This is a real, known UI inaccuracy, left as-is because fixing
+it means touching the UI, which was out of scope for this pass. Fix before
+using this in front of a judge: either drop the count entirely for the
+Hindsight path, or find a different signal (e.g. `last_refreshed_at`) to
+show instead.

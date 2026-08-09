@@ -159,13 +159,23 @@ workspace, wired into a new read-only tRPC procedure and a live panel on
 `/governance-demo/trust`. packages/agent-memory: 27/27 tests pass, tsc
 clean, verified standalone outside this sandbox's disk-constrained
 monorepo install. apps/api and apps/web: typecheck clean too, verified
-2026-08-09 on the founder's own machine after pulling. The one thing
-still unverified is a live call against Hindsight's mental-model
-endpoints specifically — same status retain/recall carried until their
-own live verification happened. Full detail, including the precise
-per-layer table, is in docs/hindsight-architecture-review.md — read
-that, not just this paragraph, before making any claim about this
-feature to a judge.
+2026-08-09 on the founder's own machine after pulling.
+
+Also 2026-08-09: checked hindsightClient.ts's mental-model method
+signatures against the ACTUAL installed @vectorize-io/hindsight-client
+type definitions (not just the hindsight-skills project's doc
+examples, which is where the original code came from) and found three
+real mismatches — wrong call shape (positional args vs an options
+object), wrong field casing, and a wrong response shape that would
+have thrown on the very first live call (`listMentalModels` returns
+`items`, not `mental_models`). All three fixed. Retain/recall/reflect
+were checked the same way and are confirmed correct, no changes needed.
+A live call still has not happened — the type contract is now right,
+but that is not the same guarantee as a successful live round trip.
+Full detail, including a known remaining UI inaccuracy left unfixed on
+purpose (basedOnCount always reads 0 against real Hindsight), is in
+docs/hindsight-architecture-review.md — read that, not just this
+paragraph, before making any claim about this feature to a judge.
 
 ## 4. What changed recently (and why it matters)
 

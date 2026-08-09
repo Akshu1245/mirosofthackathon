@@ -21,9 +21,9 @@ describe("createAgentMemoryAdapter", () => {
           retain: async () => ({ success: true, items_count: 1 }),
           recall: async () => ({ results: [] }),
           reflect: async () => ({ text: "ok", based_on: [] }),
-          listMentalModels: async () => ({ mental_models: [] }),
-          createMentalModel: async () => ({ mental_model_id: "mm_1" }),
-          getMentalModel: async () => ({ content: "", based_on: [] }),
+          listMentalModels: async () => ({ items: [] }),
+          createMentalModel: async () => ({ mental_model_id: "mm_1", operation_id: "op_1" }),
+          getMentalModel: async () => ({ content: "" }),
         },
       },
     });

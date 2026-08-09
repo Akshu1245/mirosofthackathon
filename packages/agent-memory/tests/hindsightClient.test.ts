@@ -16,9 +16,9 @@ function fakeClient(overrides: Partial<HindsightWireClient> = {}): HindsightWire
     retain: vi.fn().mockResolvedValue({ success: true, items_count: 1 }),
     recall: vi.fn().mockResolvedValue({ results: [] }),
     reflect: vi.fn().mockResolvedValue({ text: "no relevant memories", based_on: [] }),
-    listMentalModels: vi.fn().mockResolvedValue({ mental_models: [] }),
-    createMentalModel: vi.fn().mockResolvedValue({ mental_model_id: "mm_default" }),
-    getMentalModel: vi.fn().mockResolvedValue({ content: "", based_on: [] }),
+    listMentalModels: vi.fn().mockResolvedValue({ items: [] }),
+    createMentalModel: vi.fn().mockResolvedValue({ mental_model_id: "mm_default", operation_id: "op_default" }),
+    getMentalModel: vi.fn().mockResolvedValue({ content: "" }),
     ...overrides,
   };
 }
@@ -161,10 +161,10 @@ describe("HindsightAgentMemoryClient — reflectOnDecision", () => {
 });
 
 describe("HindsightAgentMemoryClient — getWorkspacePatternSummary", () => {
-  it("creates a mental model on first call when none exists yet, then fetches its content", async () => {
-    const listMentalModels = vi.fn().mockResolvedValue({ mental_models: [] });
-    const createMentalModel = vi.fn().mockResolvedValue({ mental_model_id: "mm_1" });
-    const getMentalModel = vi.fn().mockResolvedValue({ content: "Recurring pattern: 3 prompt injection attempts.", based_on: ["a", "b", "c"] });
+  it("creates a mental model with positional (bankId, name, sourceQuery) args on first call, then fetches its content", async () => {
+    const listMentalModels = vi.fn().mockResolvedValue({ items: [] });
+    const createMentalModel = vi.fn().mockResolvedValue({ mental_model_id: "mm_1", operation_id: "op_1" });
+    const getMentalModel = vi.fn().mockResolvedValue({ content: "Recurring pattern: 3 prompt injection attempts." });
     const client = new HindsightAgentMemoryClient({
       baseUrl: "http://localhost:8888",
       client: fakeClient({ listMentalModels, createMentalModel, getMentalModel }),
@@ -174,26 +174,26 @@ describe("HindsightAgentMemoryClient — getWorkspacePatternSummary", () => {
 
     expect(listMentalModels).toHaveBeenCalledTimes(1);
     expect(createMentalModel).toHaveBeenCalledTimes(1);
-    const [bankId, input] = createMentalModel.mock.calls[0]!;
+    const [bankId, name, sourceQuery, options] = createMentalModel.mock.calls[0]!;
     expect(bankId).toBe(mapWorkspaceToBankId("ws_1"));
-    expect(input.name).toBe("rakshex-workspace-pattern-summary");
-    expect(input.source_query).toMatch(/recurring security risk patterns/i);
-    expect(input.trigger).toEqual({ refresh_after_consolidation: true });
+    expect(name).toBe("rakshex-workspace-pattern-summary");
+    expect(sourceQuery).toMatch(/recurring security risk patterns/i);
+    expect(options.trigger).toEqual({ refreshAfterConsolidation: true });
     expect(getMentalModel).toHaveBeenCalledWith(mapWorkspaceToBankId("ws_1"), "mm_1", expect.anything());
     expect(result).toEqual({
       content: "Recurring pattern: 3 prompt injection attempts.",
       source: "hindsight",
       mentalModelId: "mm_1",
-      basedOnCount: 3,
+      basedOnCount: 0,
     });
   });
 
-  it("reuses an existing mental model by name instead of creating a duplicate", async () => {
+  it("reuses an existing mental model found in the items array, not creating a duplicate", async () => {
     const listMentalModels = vi.fn().mockResolvedValue({
-      mental_models: [{ id: "mm_existing", name: "rakshex-workspace-pattern-summary" }],
+      items: [{ id: "mm_existing", name: "rakshex-workspace-pattern-summary" }],
     });
     const createMentalModel = vi.fn();
-    const getMentalModel = vi.fn().mockResolvedValue({ content: "No strong patterns yet.", based_on: [] });
+    const getMentalModel = vi.fn().mockResolvedValue({ content: "No strong patterns yet." });
     const client = new HindsightAgentMemoryClient({
       baseUrl: "http://localhost:8888",
       client: fakeClient({ listMentalModels, createMentalModel, getMentalModel }),
@@ -207,10 +207,27 @@ describe("HindsightAgentMemoryClient — getWorkspacePatternSummary", () => {
     expect(result.basedOnCount).toBe(0);
   });
 
+  it("reports honestly, without crashing, when creation is processed asynchronously and returns a null mental_model_id", async () => {
+    const listMentalModels = vi.fn().mockResolvedValue({ items: [] });
+    const createMentalModel = vi.fn().mockResolvedValue({ mental_model_id: null, operation_id: "op_async_1" });
+    const getMentalModel = vi.fn();
+    const client = new HindsightAgentMemoryClient({
+      baseUrl: "http://localhost:8888",
+      client: fakeClient({ listMentalModels, createMentalModel, getMentalModel }),
+    });
+
+    const result = await client.getWorkspacePatternSummary("ws_1");
+
+    expect(getMentalModel).not.toHaveBeenCalled();
+    expect(result.mentalModelId).toBeNull();
+    expect(result.source).toBe("hindsight");
+    expect(result.content).toMatch(/still generating/i);
+  });
+
   it("scopes the mental model lookup to the calling workspace's bank id, not another workspace's", async () => {
-    const listMentalModels = vi.fn().mockResolvedValue({ mental_models: [] });
-    const createMentalModel = vi.fn().mockResolvedValue({ mental_model_id: "mm_2" });
-    const getMentalModel = vi.fn().mockResolvedValue({ content: "x", based_on: [] });
+    const listMentalModels = vi.fn().mockResolvedValue({ items: [] });
+    const createMentalModel = vi.fn().mockResolvedValue({ mental_model_id: "mm_2", operation_id: "op_2" });
+    const getMentalModel = vi.fn().mockResolvedValue({ content: "x" });
     const client = new HindsightAgentMemoryClient({
       baseUrl: "http://localhost:8888",
       client: fakeClient({ listMentalModels, createMentalModel, getMentalModel }),

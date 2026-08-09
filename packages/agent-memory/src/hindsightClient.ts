@@ -65,25 +65,32 @@ export interface HindsightWireClient {
    * package. Same "implemented, pending live verification" status as
    * retain/recall/reflect above until a live call actually succeeds.
    */
+  /**
+   * Signatures verified 2026-08-09 against the actual installed
+   * @vectorize-io/hindsight-client@0.9.0 type definitions
+   * (node_modules/@vectorize-io/hindsight-client/dist/index.d.ts) — NOT
+   * guessed from the hindsight-skills project's Node.js doc examples,
+   * which turned out to have three real mismatches against this
+   * signature (positional args vs an options object, camelCase
+   * `refreshAfterConsolidation` not `refresh_after_consolidation`, and
+   * `mental_model_id` being nullable). See
+   * docs/hindsight-architecture-review.md for the full comparison.
+   */
   listMentalModels(
     bankId: string,
     options?: { signal?: AbortSignal },
-  ): Promise<{ mental_models: Array<{ id: string; name: string }> }>;
+  ): Promise<{ items: Array<{ id: string; name: string }> }>;
   createMentalModel(
     bankId: string,
-    input: {
-      name: string;
-      source_query: string;
-      tags?: string[];
-      trigger?: { refresh_after_consolidation?: boolean };
-    },
-    options?: { signal?: AbortSignal },
-  ): Promise<{ mental_model_id: string }>;
+    name: string,
+    sourceQuery: string,
+    options?: { trigger?: { refreshAfterConsolidation?: boolean }; signal?: AbortSignal },
+  ): Promise<{ mental_model_id?: string | null; operation_id: string }>;
   getMentalModel(
     bankId: string,
     mentalModelId: string,
     options?: { signal?: AbortSignal },
-  ): Promise<{ content: string; based_on?: unknown }>;
+  ): Promise<{ content?: string | null }>;
 }
 
 export interface HindsightAgentMemoryClientOptions {
@@ -246,33 +253,41 @@ export class HindsightAgentMemoryClient implements AgentMemoryAdapter {
     const bankId = mapWorkspaceToBankId(workspaceId);
     return withTimeout("getWorkspacePatternSummary", this.timeoutMs, async (signal) => {
       const list = await this.client.listMentalModels(bankId, { signal });
-      let mentalModelId = list.mental_models.find((m) => m.name === WORKSPACE_PATTERN_MODEL_NAME)?.id;
+      let mentalModelId = list.items.find((m) => m.name === WORKSPACE_PATTERN_MODEL_NAME)?.id;
 
       if (!mentalModelId) {
         const created = await this.client.createMentalModel(
           bankId,
-          {
-            name: WORKSPACE_PATTERN_MODEL_NAME,
-            source_query: WORKSPACE_PATTERN_SOURCE_QUERY,
-            trigger: { refresh_after_consolidation: true },
-          },
-          { signal },
+          WORKSPACE_PATTERN_MODEL_NAME,
+          WORKSPACE_PATTERN_SOURCE_QUERY,
+          { trigger: { refreshAfterConsolidation: true }, signal },
         );
+        // Real SDK: creation can be processed asynchronously, in which case
+        // mental_model_id is null and only operation_id is returned. Do not
+        // guess a fabricated ID or call getMentalModel with undefined —
+        // report honestly that synthesis hasn't finished yet.
+        if (!created.mental_model_id) {
+          return {
+            content: "Hindsight is still generating this workspace's pattern summary — check back shortly.",
+            source: "hindsight",
+            mentalModelId: null,
+            basedOnCount: 0,
+          };
+        }
         mentalModelId = created.mental_model_id;
       }
 
       const model = await this.client.getMentalModel(bankId, mentalModelId, { signal });
-      const basedOnCount = Array.isArray(model.based_on)
-        ? model.based_on.length
-        : model.based_on && typeof model.based_on === "object"
-          ? Object.keys(model.based_on as object).length
-          : 0;
 
       return {
-        content: model.content,
+        content: model.content ?? "No recurring pattern synthesized yet for this workspace.",
         source: "hindsight",
         mentalModelId,
-        basedOnCount,
+        // Real SDK: MentalModelResponse carries no fact/incident count field
+        // (unlike reflect()'s based_on). Report 0 honestly rather than
+        // inventing a number — do not resurrect the old based_on-derived
+        // count, it was reading a field that does not exist on this response.
+        basedOnCount: 0,
       };
     });
   }
