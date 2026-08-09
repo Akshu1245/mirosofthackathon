@@ -94,10 +94,14 @@ change to the already-verified evaluateGoverned request path.
 | Layer | Status |
 |---|---|
 | `packages/agent-memory` (types, hindsightClient, localFallback) | **Verified 2026-08-09** — 27/27 tests pass, `tsc --noEmit` clean, run standalone outside the monorepo workspace to route around this sandbox's disk limits. Real output, not claimed. |
-| `apps/api` (`workspacePatternSummary` procedure) | **Not typechecked yet.** A real bug was caught and fixed by hand (missing `getAgentMemoryAdapter` import) but `pnpm --filter @rakshex/api typecheck` has not been run since this change — do that before treating this as proven. |
-| `apps/web` (trust page live panel) | **Not typechecked yet**, same reason. Run `pnpm --filter @rakshex/web typecheck`. |
+| `apps/api` (`workspacePatternSummary` procedure) | **Verified 2026-08-09** — `pnpm --filter @rakshex/api typecheck` clean, run on the founder's actual machine after pulling this change. (A real bug — missing `getAgentMemoryAdapter` import — was caught and fixed by hand before this run, not by it.) |
+| `apps/web` (trust page live panel) | **Verified 2026-08-09** — `pnpm --filter @rakshex/web typecheck` clean, same run. |
 | Mental model method names against the real `@vectorize-io/hindsight-client` package | **Unverified against a live call**, same status as the existing retain/recall/reflect methods — taken from the hindsight-skills project's own documented Node.js examples, not from inspecting the installed package's actual `.d.ts` (attempted, blocked by output-size limits in this session). First live call to `/governance-demo/trust` with a real Hindsight key will either confirm or break this — watch for it specifically, don't assume it's fine just because retain/recall already work. |
 
-Do not mark this "proven" in the honest-close screen until the two pending
-typecheck runs come back clean and one live Hindsight call against this new
-method has actually succeeded.
+Both pending typecheck runs are now clean. The one remaining unverified
+item is unchanged: a live Hindsight call against `listMentalModels` /
+`createMentalModel` / `getMentalModel` has not happened yet — that only
+resolves once a real Hindsight key is wired in and `/governance-demo/trust`
+is loaded against it. Do not mark this "proven" on the honest-close screen
+until that happens; typecheck and unit tests passing is necessary but not
+sufficient for a claim about a live third-party API.

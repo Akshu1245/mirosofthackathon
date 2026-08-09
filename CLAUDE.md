@@ -158,11 +158,14 @@ call. New `getWorkspacePatternSummary` method, one mental model per
 workspace, wired into a new read-only tRPC procedure and a live panel on
 `/governance-demo/trust`. packages/agent-memory: 27/27 tests pass, tsc
 clean, verified standalone outside this sandbox's disk-constrained
-monorepo install. apps/api and apps/web: NOT typechecked since this
-change landed — do that before calling this proven end to end. Full
-detail, including the precise per-layer verification table, is in
-docs/hindsight-architecture-review.md — read that, not just this
-paragraph, before making any claim about this feature to a judge.
+monorepo install. apps/api and apps/web: typecheck clean too, verified
+2026-08-09 on the founder's own machine after pulling. The one thing
+still unverified is a live call against Hindsight's mental-model
+endpoints specifically — same status retain/recall carried until their
+own live verification happened. Full detail, including the precise
+per-layer table, is in docs/hindsight-architecture-review.md — read
+that, not just this paragraph, before making any claim about this
+feature to a judge.
 
 ## 4. What changed recently (and why it matters)
 
