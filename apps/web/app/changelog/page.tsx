@@ -20,6 +20,16 @@ interface ChangelogEntry {
 
 const ENTRIES: ChangelogEntry[] = [
   {
+    version: "Product direction",
+    date: "October 2026",
+    items: [
+      { type: "improved", text: "Focused customer validation on Budget Lock and Self-Repair; no new guardrail-monitoring product." },
+      { type: "improved", text: "Clarified Budget Lock as advisory until cross-provider hard spending limits are proven." },
+      { type: "improved", text: "Clarified that Self-Repair has controlled Stripe evidence, with end-to-end integration and human-reviewed repair still in progress." },
+      { type: "improved", text: "Set five genuine design partners as the next milestone before choosing a primary paid product." },
+    ],
+  },
+  {
     version: "v0.5.0",
     date: "June 2026",
     items: [
@@ -102,8 +112,7 @@ export default function ChangelogPage() {
             Changelog
           </h1>
           <p className="text-neutral-400 mt-2 text-base">
-            Track product updates, early releases, and the evolution of the RaksHex AI governance
-            framework.
+            Track historical updates and the current Budget Lock + Self-Repair validation direction.
           </p>
         </header>
 
