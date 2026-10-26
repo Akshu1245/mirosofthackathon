@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Wallet, GitPullRequest, ChartNoAxesCombined, FlaskConical } from "lucide-react";
+import { Wallet, GitPullRequest } from "lucide-react";
 
 const cards = [
   {
