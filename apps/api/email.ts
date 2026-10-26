@@ -688,15 +688,15 @@ export async function sendWaitlistConfirmationEmail(toEmail: string, plan: strin
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background:#0b0f19; margin:0; padding:40px 0; color: #f3f4f6;">
   <div style="max-width:520px; margin:0 auto; background:#111827; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.4); border: 1px solid #1f2937;">
     <div style="background:linear-gradient(135deg,#3b82f6,#1d4ed8); padding:32px; text-align:center;">
-      <h1 style="color:#fff; margin:0; font-size:24px; font-weight:700; letter-spacing:-0.025em;">🔒 RakshEx AI Governance</h1>
+      <h1 style="color:#fff; margin:0; font-size:24px; font-weight:700; letter-spacing:-0.025em;">🔒 RaksHex · Budget Lock + Self-Repair</h1>
     </div>
     <div style="padding:40px 32px;">
-      <h2 style="color:#60a5fa; font-size:20px; font-weight:600; margin:0 0 16px;">Welcome to the Waitlist!</h2>
+      <h2 style="color:#60a5fa; font-size:20px; font-weight:600; margin:0 0 16px;">Thanks for your interest</h2>
       <p style="font-size:16px; line-height:1.6; margin:0 0 24px; color: #d1d5db;">
-        Thank you for joining the RakshEx waitlist. We have recorded your interest in the <strong>${plan}</strong> plan.
+        Thank you for your interest in RaksHex. We are speaking with teams that face unexpected AI/API costs or broken API integrations.
       </p>
       <p style="font-size:16px; line-height:1.6; margin:0 0 24px; color: #d1d5db;">
-        We are granting access in rolling batches to ensure maximum stability and support for our users. You will be notified as soon as an opening becomes available for your slot.
+        RaksHex is early-stage and not production-proven. This message confirms receipt of your interest, not a subscription, product access or a confirmed pilot. We may follow up to discuss your experience.
       </p>
       <div style="border-top:1px solid #374151; padding-top:20px; margin-top:20px;">
         <p style="font-size:14px; color:#9ca3af; margin:0 0 8px;">
@@ -709,7 +709,7 @@ export async function sendWaitlistConfirmationEmail(toEmail: string, plan: strin
     </div>
     <div style="background:#1f2937; border-top:1px solid #374151; padding:20px 32px; text-align:center;">
       <p style="color:#9ca3af; font-size:12px; margin:0;">
-        © ${new Date().getFullYear()} RakshEx. AI Runtime Governance.
+        © ${new Date().getFullYear()} RaksHex. Early product validation.
       </p>
     </div>
   </div>
@@ -739,15 +739,15 @@ export async function sendWaitlistConfirmationEmail(toEmail: string, plan: strin
   }
 
   // Send internal notification to akshay@rakshex.in
-  const internalSubject = `New RakshEx waitlist signup: ${toEmail} - ${plan}`;
+  const internalSubject = `New RaksHex early-interest signup: ${toEmail}`;
   const internalHtml = `
 <!DOCTYPE html>
 <html>
 <body>
-  <h2>New Waitlist Sign-up Details:</h2>
+  <h2>New RaksHex Early-Interest Sign-up:</h2>
   <ul>
     <li><strong>Email:</strong> ${toEmail}</li>
-    <li><strong>Interested Plan:</strong> ${plan}</li>
+    <li><strong>Legacy plan field (internal):</strong> ${plan}</li>
     <li><strong>Timestamp:</strong> ${new Date().toISOString()}</li>
   </ul>
 </body>
