@@ -1,95 +1,40 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "RaksHex FAQ – AI Runtime Governance Questions Answered",
-  description:
-    "Frequently asked questions about RaksHex. Learn how it blocks prompt injection, controls LLM costs, discovers shadow APIs, and helps with compliance.",
+  title: "Frequently Asked Questions — RaksHex",
+  description: "Answers about Budget Lock, Self-Repair, pilot readiness and RaksHex's current evidence.",
   alternates: { canonical: "/faq" },
 };
 
 const FAQS = [
-  {
-    q: "How long does setup take?",
-    a: "Setup takes less than 5 minutes. You can import your Postman or OpenAPI collection to start scanning immediately, or integrate our SDK with a single line of code.",
-  },
-  {
-    q: "Do you store our API data?",
-    a: "No. We do not store request or response bodies. All security scanning and PII detection is performed in-memory, and only metadata (such as paths, latency, and token counts) is persisted. For strict privacy requirements, we offer self-hosted deployment.",
-  },
-  {
-    q: "What compliance standards do you support?",
-    a: "RaksHex maps findings and audit events to control language from PCI DSS, SOC 2 Trust Services Criteria, HIPAA, OWASP API Top 10, and OWASP LLM Top 10, and can export that evidence for your auditors. A SOC 2 audit is in progress — we do not claim certification until it's complete and published.",
-  },
-  {
-    q: "How does the kill switch work?",
-    a: "You can configure budget thresholds, anomaly detection scores, or prompt injection blocks. When a policy is violated, RaksHex blocks further API calls to the LLM within milliseconds, preventing cost overruns and data leaks.",
-  },
-  {
-    q: "What LLM providers do you support?",
-    a: "We support all major providers, including OpenAI, Anthropic, Google Gemini, Cohere, Mistral, Groq, and AWS Bedrock.",
-  },
-  {
-    q: "How is RaksHex different from Snyk or Datadog?",
-    a: "Snyk scans static code dependencies, and Datadog provides general APM metrics. RaksHex is built specifically for AI runtime governance—analyzing LLM inputs/outputs in real-time, detecting prompt injections, managing token budgets, and mapping anomalies to compliance clauses.",
-  },
-  {
-    q: "Do you support self-hosted deployment?",
-    a: "Yes. We offer a Docker Compose setup and Kubernetes-friendly production compose for self-hosting within your private cloud or on-premise infrastructure.",
-  },
-  {
-    q: "What happens when I exceed my plan limits?",
-    a: "When you approach your plan limits, we send warning notifications. If you exceed them, we provide a grace period depending on your plan. For continued high usage, your account will be capped or you will be prompted to upgrade to a higher tier.",
-  },
-  {
-    q: "How does thinking token attribution work?",
-    a: "For models with reasoning tokens (like OpenAI o1/o3 or DeepSeek R1), RaksHex parses the raw API response, isolates the thinking tokens, and attributes their exact cost separately from standard output tokens.",
-  },
-  {
-    q: "Is there a free trial for Pro?",
-    a: "Yes. We offer a 14-day free trial for the Pro plan, with no credit card required. You can experience advanced scanning, Slack alerts, and team features immediately.",
-  },
-  {
-    q: "Can I export compliance reports?",
-    a: "Yes. You can export complete, auditor-ready compliance reports and raw scan evidence in PDF, JSON, and CSV formats.",
-  },
-  {
-    q: "How do I integrate with GitHub Actions?",
-    a: "You can use our official GitHub Action to automatically scan API collections and check for security regressions or shadow endpoints as part of your CI/CD pipeline.",
-  },
+  { q: "What does RaksHex build?", a: "Two workflows: Budget Lock for AI/API spending visibility, forecasting and advisory alerts; and Self-Repair for detecting breaking API changes, proposing tested fixes and requiring human approval." },
+  { q: "Is Budget Lock a guaranteed hard spending cap?", a: "No. Cross-provider enforcement has not been proven. We are validating advisory budgeting as a potential paid workflow, not promising that an API provider will stop billing at a threshold." },
+  { q: "Which providers can you connect today?", a: "Provider coverage depends on the individual integration and is still under development. Our site does not claim universal multi-provider readiness. Please contact us with the provider and workflow you need tested." },
+  { q: "What is the Self-Repair evidence?", a: "An internal, controlled Stripe SDK/API change example identifies an affected TypeScript reference. The fixture went from two TypeScript errors before to zero after, with six fixture tests passing. End-to-end deployment and general repair reliability are not proven." },
+  { q: "Does Self-Repair merge code without approval?", a: "No. Human approval is part of the intended workflow. Suggestions and tests are evidence for a developer, not authority to automatically merge or deploy." },
+  { q: "Do you offer production security enforcement or an Agent Firewall?", a: "Our current product focus does not include a separate guardrail-monitoring or Agent Firewall offering. Logs and security checks, where appropriate, support Budget Lock and Self-Repair." },
+  { q: "Are you accepting paying customers?", a: "RaksHex is pre-revenue and currently validating the customer problem and willingness to pay. We have no published production plans or proven subscriptions for these workflows." },
+  { q: "How can my team become a design partner?", a: "Share your work email through our design partner form or write to akshay@rakshex.in. We want to understand a real cost incident or integration breakage, review your requirements, and discuss a scoped test. No obligation is implied." },
+  { q: "What will determine the primary product?", a: "Evidence from five genuine design partners: past incidents, tested technical outcomes, urgency and actual willingness to pay. Feature count is not the milestone." },
 ];
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-transparent text-white py-24 px-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-4 font-display text-blue-500">
-          Frequently Asked Questions
-        </h1>
-        <p className="text-gray-400 mb-12 font-mono text-sm">
-          Everything you need to know about RaksHex. Can't find your question?{" "}
-          <Link
-            href="mailto:support@rakshex.in"
-            className="text-blue-400 hover:text-blue-300 underline"
-          >
-            Email us
-          </Link>
-          .
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {FAQS.map((faq, i) => (
-            <div
-              key={i}
-              className="bg-black/50 rounded-xl p-6 border border-gray-700/50 hover:border-blue-500/30 transition-all flex flex-col justify-between"
-            >
-              <div>
-                <h3 className="font-bold text-lg mb-3 text-blue-400">{faq.q}</h3>
-                <p className="text-gray-300 text-sm leading-relaxed">{faq.a}</p>
-              </div>
-            </div>
+    <main className="min-h-screen bg-transparent text-white pt-32 pb-24 px-6">
+      <div className="max-w-5xl mx-auto">
+        <p className="text-[#14B8A6] text-xs tracking-widest font-semibold uppercase mb-3">Current product scope</p>
+        <h1 className="text-4xl font-bold mb-4">Frequently asked questions</h1>
+        <p className="text-neutral-400 max-w-2xl mb-10">What is tested, what is planned, and how your team can help validate RaksHex.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {FAQS.map((faq) => (
+            <article key={faq.q} className="rounded-xl border border-[#14B8A6]/20 bg-[#0B0F17]/60 p-6 hover:border-[#14B8A6]/45 transition-colors">
+              <h2 className="font-semibold text-lg text-white mb-3">{faq.q}</h2>
+              <p className="text-neutral-400 text-sm leading-relaxed">{faq.a}</p>
+            </article>
           ))}
         </div>
+        <p className="mt-10 text-neutral-400 text-sm">Have a specific integration or incident? <Link href="/waitlist" className="text-[#14B8A6] hover:underline">Discuss a design partnership →</Link></p>
       </div>
-    </div>
+    </main>
   );
 }

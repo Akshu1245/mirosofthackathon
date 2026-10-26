@@ -15,19 +15,19 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.rakshex.in";
 
 export const metadata: Metadata = {
   title: {
-    default: "RaksHex — AI Runtime Governance, Prompt Injection & LLM Cost Control",
+    default: "RaksHex — AI/API Cost Control & Self-Repair",
     template: "%s | RaksHex",
   },
   description:
-    "India's AI Runtime Governance platform. Block prompt injection, control LLM costs, discover shadow APIs, and generate compliance reports in one place.",
+    "RaksHex is developing Budget Lock for AI/API spending visibility and Self-Repair for tested, human-reviewed fixes to breaking API integrations.",
   keywords: [
-    "AI runtime governance",
-    "prompt injection blocking",
-    "LLM cost control",
-    "shadow API discovery",
-    "AI agent security",
-    "MCP governance",
-    "OWASP AI Top 10",
+    "AI/API cost visibility",
+    "API change detection",
+    "AI API spending forecasts",
+    "API Self-Repair",
+    "human-reviewed code repair",
+    "developer tools",
+    "budget alerts",
     "RaksHex",
   ],
   metadataBase: new URL(SITE_URL),
@@ -44,9 +44,9 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png?v=2",
   },
   openGraph: {
-    title: "RaksHex – AI Runtime Governance & Prompt Injection Protection",
+    title: "RaksHex — AI/API Cost Control & Self-Repair",
     description:
-      "AI Runtime Governance for Indian teams. Block prompt injection, control LLM costs, discover shadow APIs, and generate compliance reports.",
+      "Budget Lock: advisory AI/API spend visibility. Self-Repair: tested repair suggestions with human review. Early-stage validation; neither workflow production-proven.",
     type: "website",
     siteName: "RaksHex",
     locale: "en_US",
@@ -55,13 +55,13 @@ export const metadata: Metadata = {
         url: "/og-image.png?v=2",
         width: 1200,
         height: 630,
-        alt: "RaksHex AI Control Plane",
+        alt: "RaksHex — Budget Lock and Self-Repair",
       },
     ],
   },
   twitter: {
-    title: "RaksHex – AI Runtime Governance",
-    description: "Block prompt injection, control LLM costs, and govern AI agents with RaksHex.",
+    title: "RaksHex — AI/API Cost Control & Self-Repair",
+    description: "Explore Budget Lock and Self-Repair. Two early-stage workflows for AI/API costs and broken integrations.",
     creator: "@rakshexhq",
     images: ["/og-image.png?v=2"],
   },

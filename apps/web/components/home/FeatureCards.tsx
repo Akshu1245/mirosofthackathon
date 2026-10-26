@@ -1,127 +1,50 @@
-"use client";
-
 import Link from "next/link";
-import {
-  Shield,
-  Power,
-  BarChart2,
-  Brain,
-  Ghost,
-  Key,
-  FileText,
-  Network,
-  type LucideIcon,
-} from "lucide-react";
+import { Wallet, GitPullRequest, ChartNoAxesCombined, FlaskConical } from "lucide-react";
 
-interface FeatureCardProps {
-  title: string;
-  description: string;
-  link: string;
-  icon: LucideIcon;
-  animClass: string;
-}
-
-function FeatureCard({ title, description, link, icon: Icon, animClass }: FeatureCardProps) {
-  return (
-    <Link
-      href={link}
-      className="block w-full bg-transparent border border-[#14B8A6]/10 hover:border-[#14B8A6]/35 rounded-lg p-6 transition-all duration-200 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(20,184,166,0.15)] transform group text-left anti-gravity-float"
-    >
-      {/* Icon: Teal (#14B8A6), 32x32px */}
-      <div className="w-8 h-8 text-[#14B8A6] group-hover:text-[#0D9488] mb-4 transition-colors duration-150">
-        <Icon className={`w-8 h-8 transition-transform duration-150 ${animClass}`} />
-      </div>
-
-      {/* Title */}
-      <h3 className="text-white font-sans text-xl font-semibold mb-2">{title}</h3>
-
-      {/* Description */}
-      <p className="text-[#9CA3AF] font-sans text-sm leading-relaxed mb-4">{description}</p>
-
-      {/* Link */}
-      <span className="text-[#14B8A6] font-sans text-sm font-semibold inline-flex items-center gap-1 group-hover:underline">
-        Learn more{" "}
-        <span className="transform group-hover:translate-x-1 transition-transform duration-150">
-          &rarr;
-        </span>
-      </span>
-    </Link>
-  );
-}
+const cards = [
+  {
+    id: "budget-lock",
+    title: "Budget Lock",
+    tag: "Revenue hypothesis · validation stage",
+    icon: Wallet,
+    description: "Understand usage, estimate spend and review budget alerts across AI/API workloads. Hard caps are not yet established across providers.",
+    details: ["Usage and cost records", "Spend forecasting", "Advisory budget alerts"],
+  },
+  {
+    id: "self-repair",
+    title: "Self-Repair",
+    tag: "Technical proof · controlled example",
+    icon: GitPullRequest,
+    description: "Identify changes in upstream APIs, map affected code, suggest fixes and check them with tests before a developer approves.",
+    details: ["Change-to-code mapping", "Proposed repair with test evidence", "Human approval before adoption"],
+  },
+];
 
 export function FeatureCards() {
-  const cards = [
-    {
-      title: "Agent Firewall",
-      description:
-        "Semantic action authorization evaluated against delegated authority, in real time.",
-      link: "/features#security-scanner",
-      icon: Shield,
-      animClass: "animate-pulse-shield",
-    },
-    {
-      title: "Credential Broker",
-      description: "Fail-closed mediation. A DENY blocks the credential, not just the log line.",
-      link: "/features#kill-switch",
-      icon: Power,
-      animClass: "animate-glow-power",
-    },
-    {
-      title: "Delegated Authority",
-      description: "Parent-to-child attenuation — a child scope can never exceed its parent's.",
-      link: "/features#cost-monitor",
-      icon: BarChart2,
-      animClass: "animate-bounce-graph",
-    },
-    {
-      title: "Action Ledger",
-      description: "Hash-chained, tamper-evident record of every authorization decision.",
-      link: "/features#thinking-tokens",
-      icon: Brain,
-      animClass: "animate-pulse-brain",
-    },
-    {
-      title: "Shadow API Discovery",
-      description: "Static route extraction across Express, FastAPI, Flask, Django, and Spring.",
-      link: "/features#shadow-api",
-      icon: Ghost,
-      animClass: "animate-fade-ghost",
-    },
-    {
-      title: "Credential Scanner",
-      description: "Finds exposed AWS, GitHub, OpenAI, and Stripe keys in scanned repositories.",
-      link: "/features#credentials",
-      icon: Key,
-      animClass: "animate-rotate-key",
-    },
-    {
-      title: "Audit Evidence",
-      description: "Exportable JSON/CSV/PDF evidence packs built from the Action Ledger.",
-      link: "/features#compliance",
-      icon: FileText,
-      animClass: "animate-draw-check",
-    },
-    {
-      title: "MCP Governance",
-      description: "Adversarial-intent scanning and tool allowlisting for MCP-connected agents.",
-      link: "/features#mcp",
-      icon: Network,
-      animClass: "animate-connect-network",
-    },
-  ];
-
   return (
-    <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-      {cards.map((card, idx) => (
-        <FeatureCard
-          key={idx}
-          title={card.title}
-          description={card.description}
-          link={card.link}
-          icon={card.icon}
-          animClass={card.animClass}
-        />
-      ))}
+    <div className="space-y-8">
+      <div className="text-center max-w-2xl mx-auto">
+        <p className="text-[#14B8A6] text-xs font-semibold tracking-widest uppercase mb-3">Two workflows · One focused product direction</p>
+        <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">Built around two costly problems</h2>
+        <p className="text-[#9CA3AF]">Test, failure and cost logs live inside these workflows — they are not a third product.</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {cards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <article id={card.id} key={card.id} className="scroll-mt-32 bg-[#0B0F17]/65 border border-[#14B8A6]/20 hover:border-[#14B8A6]/50 rounded-xl p-7 transition-all duration-200 hover:-translate-y-1 motion-reduce:transform-none">
+              <Icon className="w-8 h-8 text-[#14B8A6] mb-5" aria-hidden="true" />
+              <span className="text-[11px] font-mono text-[#14B8A6]">{card.tag}</span>
+              <h3 className="text-white font-semibold text-2xl mt-2 mb-3">{card.title}</h3>
+              <p className="text-[#9CA3AF] leading-relaxed mb-5">{card.description}</p>
+              <ul className="space-y-2 text-sm text-neutral-300">
+                {card.details.map((d) => <li key={d} className="flex items-start gap-2"><span className="text-[#14B8A6]">•</span>{d}</li>)}
+              </ul>
+              <Link href="/features" className="text-[#14B8A6] font-semibold text-sm inline-block mt-6 hover:underline">Explore workflow →</Link>
+            </article>
+          );
+        })}
+      </div>
     </div>
   );
 }

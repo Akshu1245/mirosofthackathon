@@ -3,118 +3,50 @@
 import { useState } from "react";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc";
-import { ArrowRight, CheckCircle, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle } from "lucide-react";
 
 export default function WaitlistPage() {
   const [email, setEmail] = useState("");
-  const [plan, setPlan] = useState("Free");
   const [submitted, setSubmitted] = useState(false);
 
   const joinWaitlist = trpc.waitlist.join.useMutation({
     onSuccess: () => setSubmitted(true),
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!email.trim()) return;
-    joinWaitlist.mutate({ email: email.trim(), plan: plan as "Free" | "Pro" | "Enterprise" });
+    // Existing waitlist API uses a legacy Free/Pro/Enterprise enum.
+    // Record interest as Free rather than pretending a paid plan exists.
+    joinWaitlist.mutate({ email: email.trim(), plan: "Free", source: "design_partner_interest" });
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-white pt-32 pb-16 px-6 xl:px-8">
+    <main className="min-h-screen bg-transparent text-white pt-32 pb-24 px-6">
       <div className="max-w-3xl mx-auto text-center">
-        {/* Hero */}
-        <div className="mb-12">
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#14B8A6]/10 border border-[#14B8A6]/20 text-[#14B8A6] text-sm font-medium mb-6">
-            <Zap className="w-4 h-4" /> Early Access
-          </span>
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 font-manrope">Join the Waitlist</h1>
-          <p className="text-neutral-400 text-lg max-w-xl mx-auto leading-relaxed">
-            Get product updates, private-beta availability, and a clear path to a scoped workspace
-            evaluation.
-          </p>
-        </div>
-
-        {/* Form */}
+        <p className="text-[#14B8A6] text-xs tracking-widest uppercase font-semibold mb-4">Seeking five design partners</p>
+        <h1 className="text-4xl md:text-5xl font-bold mb-5">Help shape RaksHex.</h1>
+        <p className="text-neutral-400 max-w-xl mx-auto leading-relaxed text-lg mb-10">Have an unexpected AI/API bill or a breaking API integration? Share your email and we'll contact you to discuss a possible scoped evaluation. This is not a product signup or paid subscription.</p>
         {!submitted ? (
-          <div className="bg-black/50 rounded-2xl border border-neutral-800 p-8 max-w-lg mx-auto">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm text-neutral-400 mb-2 text-left">
-                  Email address
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@company.com"
-                  className="w-full bg-black/50 border border-neutral-700 rounded-lg px-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:border-[#14B8A6]/50 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-neutral-400 mb-2 text-left">
-                  Interested plan
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {(["Free", "Pro", "Enterprise"] as const).map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setPlan(p)}
-                      className={`py-2.5 rounded-lg text-sm font-medium border transition-all ${
-                        plan === p
-                          ? "bg-[#14B8A6]/10 border-[#14B8A6]/40 text-[#14B8A6]"
-                          : "bg-black/50 border-neutral-700 text-neutral-400 hover:text-white"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button
-                type="submit"
-                disabled={joinWaitlist.isPending}
-                className="w-full py-3 rounded-lg bg-[#14B8A6] text-[#07100f] font-semibold hover:bg-[#2dd4bf] transition-colors disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {joinWaitlist.isPending ? (
-                  "Joining..."
-                ) : (
-                  <>
-                    Join Waitlist <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-              {joinWaitlist.isError && (
-                <p className="text-red-400 text-sm">{joinWaitlist.error.message}</p>
-              )}
-            </form>
-            <p className="text-neutral-500 text-xs mt-4">
-              No spam. Unsubscribe anytime. We respect your privacy.
-            </p>
-          </div>
+          <form onSubmit={handleSubmit} className="bg-[#0B0F17]/70 rounded-2xl border border-[#14B8A6]/25 p-8 max-w-lg mx-auto">
+            <label htmlFor="partner-email" className="block text-neutral-300 text-sm mb-3 text-left">Work email address</label>
+            <input id="partner-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required maxLength={320}
+              placeholder="you@company.com" className="w-full bg-black/50 border border-neutral-700 rounded-lg px-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:border-[#14B8A6] transition-colors" />
+            <button type="submit" disabled={joinWaitlist.isPending} className="w-full mt-5 py-3 rounded-lg bg-[#14B8A6] text-[#07100f] font-semibold hover:bg-[#2dd4bf] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              {joinWaitlist.isPending ? "Submitting…" : <>Request a conversation <ArrowRight className="w-4 h-4" /></>}
+            </button>
+            {joinWaitlist.isError && <p role="alert" className="text-red-400 mt-3 text-sm">{joinWaitlist.error.message}</p>}
+            <p className="text-neutral-500 text-xs mt-5 text-left">We use your email to follow up about a potential design-partner conversation. We won't imply that a pilot or integration is ready until verified.</p>
+          </form>
         ) : (
-          <div className="bg-black/50 rounded-2xl border border-[#14B8A6]/20 p-8 max-w-lg mx-auto">
+          <div role="status" className="bg-[#0B0F17] rounded-2xl border border-[#14B8A6]/30 p-8 max-w-lg mx-auto">
             <CheckCircle className="w-12 h-12 text-[#14B8A6] mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">You are on the list!</h2>
-            <p className="text-neutral-400 mb-6">
-              We will reach out to <strong className="text-white">{email}</strong> when your early
-              access is ready.
-            </p>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#14B8A6]/10 border border-[#14B8A6]/20 text-[#14B8A6] text-sm font-medium hover:bg-[#14B8A6]/20 transition-colors"
-            >
-              Back to home <ArrowRight className="w-4 h-4" />
-            </Link>
+            <h2 className="text-xl font-semibold mb-2">Interest received</h2>
+            <p className="text-neutral-400 mb-5">Thanks. We have recorded <strong className="text-white">{email}</strong> for a potential design-partner conversation.</p>
+            <Link href="/" className="text-[#14B8A6] hover:underline">Back to home →</Link>
           </div>
         )}
-
-        <p className="mt-12 text-sm text-neutral-500">
-          We store your request with the plan you selected and do not sell your contact details.
-        </p>
       </div>
-    </div>
+    </main>
   );
 }
